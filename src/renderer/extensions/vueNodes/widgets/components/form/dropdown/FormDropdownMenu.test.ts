@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/vue'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import FormDropdownMenu from './FormDropdownMenu.vue'
@@ -130,6 +131,50 @@ describe('FormDropdownMenu', () => {
     root.dispatchEvent(event)
 
     expect(event.defaultPrevented).toBe(true)
+  })
+
+  /** Stub that surfaces `uploadable` as a data attribute and exposes a button
+   *  that emits `show-picker`, so the parent's prop-forwarding and event
+   *  re-emission can be asserted from the DOM. */
+  const FormDropdownMenuActionsStub = {
+    name: 'FormDropdownMenuActions',
+    props: ['uploadable'],
+    emits: ['show-picker', 'search-enter'],
+    template:
+      '<button data-testid="actions-stub" :data-uploadable="String(uploadable)" @click="$emit(\'show-picker\')" />'
+  }
+
+  it('forwards uploadable prop to FormDropdownMenuActions', () => {
+    render(FormDropdownMenu, {
+      props: { ...defaultProps, uploadable: true },
+      global: {
+        stubs: {
+          FormDropdownMenuFilter: true,
+          FormDropdownMenuActions: FormDropdownMenuActionsStub,
+          VirtualGrid: VirtualGridStub
+        },
+        mocks: { $t: (key: string) => key }
+      }
+    })
+
+    expect(screen.getByTestId('actions-stub').dataset.uploadable).toBe('true')
+  })
+
+  it('re-emits show-picker when FormDropdownMenuActions emits it', async () => {
+    const { emitted } = render(FormDropdownMenu, {
+      props: { ...defaultProps, uploadable: true },
+      global: {
+        stubs: {
+          FormDropdownMenuFilter: true,
+          FormDropdownMenuActions: FormDropdownMenuActionsStub,
+          VirtualGrid: VirtualGridStub
+        },
+        mocks: { $t: (key: string) => key }
+      }
+    })
+
+    await userEvent.click(screen.getByTestId('actions-stub'))
+    expect(emitted('show-picker')).toHaveLength(1)
   })
 
   /** Vertical scrolling must remain native so the dropdown's own scroll

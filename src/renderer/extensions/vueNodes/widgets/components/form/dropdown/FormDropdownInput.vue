@@ -51,10 +51,17 @@ function focus() {
 /**
  * Open the native file picker without a user click on the input itself.
  * Must be invoked synchronously from a user-initiated event handler so the
- * browser's transient activation requirement is satisfied.
+ * browser's transient activation requirement is satisfied. Falls back to
+ * `click()` on browsers that predate showPicker (Chrome <99, Firefox <101,
+ * Safari <16).
  */
 function showPicker() {
-  fileInputRef.value?.showPicker()
+  const input = fileInputRef.value!
+  if (typeof input.showPicker === 'function') {
+    input.showPicker()
+  } else {
+    input.click()
+  }
 }
 
 defineExpose({ focus, showPicker })
