@@ -24,6 +24,7 @@ describe('FormDropdownMenu', () => {
   const defaultProps = {
     items: [createItem('1', 'Item 1'), createItem('2', 'Item 2')],
     isSelected: () => false,
+    uploadable: false,
     filterOptions: [],
     sortOptions: []
   }

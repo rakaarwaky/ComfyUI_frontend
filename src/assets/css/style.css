@@ -29,4 +29,16 @@
     position: absolute;
     width: 100%;
   }
+
+  .width-collapse-enter-active,
+  .width-collapse-leave-active {
+    transition: max-width 150ms ease;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  .width-collapse-enter-from,
+  .width-collapse-leave-to {
+    max-width: 0;
+  }
 }

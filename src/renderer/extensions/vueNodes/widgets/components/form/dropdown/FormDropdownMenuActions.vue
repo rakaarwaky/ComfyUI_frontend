@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Popover from 'primevue/popover'
-import { ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -16,16 +16,18 @@ import type { LayoutMode, SortOption } from './types'
 
 const { t } = useI18n()
 
-defineProps<{
+const { uploadable } = defineProps<{
   sortOptions: SortOption[]
   showOwnershipFilter?: boolean
   ownershipOptions?: OwnershipFilterOption[]
   showBaseModelFilter?: boolean
   baseModelOptions?: FilterOption[]
   candidateLabel?: string
+  uploadable: boolean
 }>()
 const emit = defineEmits<{
   (e: 'search-enter'): void
+  (e: 'show-picker'): void
 }>()
 
 const layoutMode = defineModel<LayoutMode>('layoutMode')
@@ -104,264 +106,296 @@ function handleSearchEnter(event: KeyboardEvent) {
   event.preventDefault()
   emit('search-enter')
 }
+
+/**
+ * Hide file upload button during search. This allows more space for the search box.
+ */
+const showUploadButtonArea = computed(() => {
+  return (
+    uploadable && (!searchQuery.value || searchQuery.value.trim().length === 0)
+  )
+})
 </script>
 
 <template>
   <div class="text-secondary flex gap-2 px-4">
-    <AsyncSearchInput
-      v-model="searchQuery"
-      autofocus
-      :class="
-        cn(
-          actionButtonStyle,
-          'hover:outline-component-node-widget-background-highlighted/80',
-          'focus-within:ring-0 focus-within:outline-component-node-widget-background-highlighted/80'
-        )
-      "
-      @enter="handleSearchEnter"
-    />
-    <span
-      v-if="candidateLabel"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      class="sr-only"
-    >
-      {{ t('widgets.uploadSelect.topResult', { result: candidateLabel }) }}
-    </span>
-
-    <Button
-      ref="sortTriggerRef"
-      :aria-label="t('assetBrowser.sortBy')"
-      :title="t('assetBrowser.sortBy')"
-      variant="textonly"
-      size="icon"
-      :class="
-        cn(
-          actionButtonStyle,
-          'relative w-8 hover:outline-component-node-widget-background-highlighted active:scale-95'
-        )
-      "
-      @click="toggleSortPopover"
-    >
-      <div
-        v-if="sortSelected !== 'default'"
-        class="absolute top-[-2px] left-[-2px] size-2 rounded-full bg-component-node-widget-background-highlighted"
-      />
-      <i class="icon-[lucide--arrow-up-down] size-4" />
-    </Button>
-    <Popover
-      ref="sortPopoverRef"
-      :dismissable="true"
-      :close-on-escape="true"
-      unstyled
-      :pt="{
-        root: {
-          class: 'absolute z-50'
-        },
-        content: {
-          class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
-        }
-      }"
-      @hide="isSortPopoverOpen = false"
-    >
-      <div
+    <Transition name="width-collapse">
+      <div v-if="showUploadButtonArea" class="text-secondary flex gap-2">
+        <Button
+          :aria-label="t('g.upload')"
+          :title="t('g.upload')"
+          variant="textonly"
+          size="md"
+          :class="
+            cn(
+              actionButtonStyle,
+              'relative flex items-center justify-center gap-2 p-2 hover:outline-component-node-widget-background-highlighted active:scale-95'
+            )
+          "
+          @click="emit('show-picker')"
+        >
+          <i class="icon-[lucide--folder-search] size-4" />
+          <span>{{ $t('g.upload') }}</span>
+        </Button>
+        <div class="h-6 w-px self-center bg-node-component-border" />
+      </div>
+    </Transition>
+    <div class="text-secondary flex flex-1 gap-2">
+      <AsyncSearchInput
+        v-model="searchQuery"
+        autofocus
         :class="
           cn(
-            'flex min-w-32 flex-col gap-2 p-2',
-            'bg-component-node-background',
-            'rounded-lg outline -outline-offset-1 outline-component-node-border'
+            actionButtonStyle,
+            'hover:outline-component-node-widget-background-highlighted/80',
+            'focus-within:ring-0 focus-within:outline-component-node-widget-background-highlighted/80'
           )
         "
-      >
-        <Button
-          v-for="item of sortOptions"
-          :key="item.name"
-          variant="textonly"
-          size="unset"
-          :class="cn('flex h-6 items-center justify-between text-left')"
-          @click="handleSortSelected(item)"
-        >
-          <span>{{ item.name }}</span>
-          <i
-            v-if="sortSelected === item.id"
-            class="icon-[lucide--check] size-4"
-          />
-        </Button>
-      </div>
-    </Popover>
-
-    <Button
-      v-if="showOwnershipFilter && ownershipOptions?.length"
-      ref="ownershipTriggerRef"
-      :aria-label="t('assetBrowser.ownership')"
-      :title="t('assetBrowser.ownership')"
-      variant="textonly"
-      size="icon"
-      :class="
-        cn(
-          actionButtonStyle,
-          'relative w-8 hover:outline-component-node-widget-background-highlighted active:scale-95'
-        )
-      "
-      @click="toggleOwnershipPopover"
-    >
-      <div
-        v-if="ownershipSelected !== 'all'"
-        class="absolute top-[-2px] left-[-2px] size-2 rounded-full bg-component-node-widget-background-highlighted"
+        @enter="handleSearchEnter"
       />
-      <i class="icon-[lucide--user] size-4" />
-    </Button>
-    <Popover
-      ref="ownershipPopoverRef"
-      :dismissable="true"
-      :close-on-escape="true"
-      unstyled
-      :pt="{
-        root: {
-          class: 'absolute z-50'
-        },
-        content: {
-          class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
-        }
-      }"
-      @hide="isOwnershipPopoverOpen = false"
-    >
-      <div
-        :class="
-          cn(
-            'flex min-w-32 flex-col gap-2 p-2',
-            'bg-component-node-background',
-            'rounded-lg outline -outline-offset-1 outline-component-node-border'
-          )
-        "
+      <span
+        v-if="candidateLabel"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        class="sr-only"
       >
-        <Button
-          v-for="item of ownershipOptions"
-          :key="item.value"
-          variant="textonly"
-          size="unset"
-          :class="cn('flex h-6 items-center justify-between text-left')"
-          @click="handleOwnershipSelected(item)"
-        >
-          <span>{{ item.name }}</span>
-          <i
-            v-if="ownershipSelected === item.value"
-            class="icon-[lucide--check] size-4"
-          />
-        </Button>
-      </div>
-    </Popover>
+        {{ t('widgets.uploadSelect.topResult', { result: candidateLabel }) }}
+      </span>
 
-    <Button
-      v-if="showBaseModelFilter && baseModelOptions?.length"
-      ref="baseModelTriggerRef"
-      :aria-label="t('assetBrowser.baseModel')"
-      :title="t('assetBrowser.baseModel')"
-      variant="textonly"
-      size="icon"
-      :class="
-        cn(
-          actionButtonStyle,
-          'relative w-8 hover:outline-component-node-widget-background-highlighted active:scale-95'
-        )
-      "
-      @click="toggleBaseModelPopover"
-    >
-      <div
-        v-if="baseModelSelected.size > 0"
-        class="absolute top-[-2px] left-[-2px] size-2 rounded-full bg-component-node-widget-background-highlighted"
-      />
-      <i class="icon-[comfy--ai-model] size-4" />
-    </Button>
-    <Popover
-      ref="baseModelPopoverRef"
-      :dismissable="true"
-      :close-on-escape="true"
-      unstyled
-      :pt="{
-        root: {
-          class: 'absolute z-50'
-        },
-        content: {
-          class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
-        }
-      }"
-      @hide="isBaseModelPopoverOpen = false"
-    >
-      <div
-        :class="
-          cn(
-            'flex min-w-32 flex-col gap-2 p-2',
-            'bg-component-node-background',
-            'rounded-lg outline -outline-offset-1 outline-component-node-border'
-          )
-        "
-      >
-        <Button
-          v-for="item of baseModelOptions"
-          :key="item.value"
-          variant="textonly"
-          size="unset"
-          :class="cn('flex h-6 items-center justify-between text-left')"
-          @click="toggleBaseModelSelection(item)"
-        >
-          <span>{{ item.name }}</span>
-          <i
-            v-if="baseModelSelected.has(item.value)"
-            class="icon-[lucide--check] size-4"
-          />
-        </Button>
-        <span class="h-0 w-full border-b border-border-default" />
-        <Button
-          variant="textonly"
-          size="unset"
-          :class="cn('flex h-6 items-center justify-between text-left')"
-          @click="baseModelSelected = new Set()"
-        >
-          {{ t('g.clearFilters') }}
-        </Button>
-      </div>
-    </Popover>
-
-    <div
-      :class="
-        cn(
-          actionButtonStyle,
-          'flex items-center justify-center gap-1 p-1 hover:outline-component-node-widget-background-highlighted'
-        )
-      "
-    >
       <Button
-        :aria-label="t('assetBrowser.listView')"
-        :title="t('assetBrowser.listView')"
+        ref="sortTriggerRef"
+        :aria-label="t('assetBrowser.sortBy')"
+        :title="t('assetBrowser.sortBy')"
         variant="textonly"
-        size="unset"
+        size="icon"
         :class="
           cn(
-            layoutSwitchItemStyle,
-            layoutMode === 'list' && 'bg-neutral-500/50 text-base-foreground'
+            actionButtonStyle,
+            'relative w-8 hover:outline-component-node-widget-background-highlighted active:scale-95'
           )
         "
-        @click="layoutMode = 'list'"
+        @click="toggleSortPopover"
       >
-        <i class="icon-[lucide--list] size-4" />
+        <div
+          v-if="sortSelected !== 'default'"
+          class="absolute top-[-2px] left-[-2px] size-2 rounded-full bg-component-node-widget-background-highlighted"
+        />
+        <i class="icon-[lucide--arrow-up-down] size-4" />
       </Button>
+      <Popover
+        ref="sortPopoverRef"
+        :dismissable="true"
+        :close-on-escape="true"
+        unstyled
+        :pt="{
+          root: {
+            class: 'absolute z-50'
+          },
+          content: {
+            class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
+          }
+        }"
+        @hide="isSortPopoverOpen = false"
+      >
+        <div
+          :class="
+            cn(
+              'flex min-w-32 flex-col gap-2 p-2',
+              'bg-component-node-background',
+              'rounded-lg outline -outline-offset-1 outline-component-node-border'
+            )
+          "
+        >
+          <Button
+            v-for="item of sortOptions"
+            :key="item.name"
+            variant="textonly"
+            size="unset"
+            :class="cn('flex h-6 items-center justify-between text-left')"
+            @click="handleSortSelected(item)"
+          >
+            <span>{{ item.name }}</span>
+            <i
+              v-if="sortSelected === item.id"
+              class="icon-[lucide--check] size-4"
+            />
+          </Button>
+        </div>
+      </Popover>
+
       <Button
-        :aria-label="t('assetBrowser.gridView')"
-        :title="t('assetBrowser.gridView')"
+        v-if="showOwnershipFilter && ownershipOptions?.length"
+        ref="ownershipTriggerRef"
+        :aria-label="t('assetBrowser.ownership')"
+        :title="t('assetBrowser.ownership')"
         variant="textonly"
-        size="unset"
+        size="icon"
         :class="
           cn(
-            layoutSwitchItemStyle,
-            layoutMode === 'grid' && 'bg-neutral-500/50 text-base-foreground'
+            actionButtonStyle,
+            'relative w-8 hover:outline-component-node-widget-background-highlighted active:scale-95'
           )
         "
-        @click="layoutMode = 'grid'"
+        @click="toggleOwnershipPopover"
       >
-        <i class="icon-[lucide--layout-grid] size-4" />
+        <div
+          v-if="ownershipSelected !== 'all'"
+          class="absolute top-[-2px] left-[-2px] size-2 rounded-full bg-component-node-widget-background-highlighted"
+        />
+        <i class="icon-[lucide--user] size-4" />
       </Button>
+      <Popover
+        ref="ownershipPopoverRef"
+        :dismissable="true"
+        :close-on-escape="true"
+        unstyled
+        :pt="{
+          root: {
+            class: 'absolute z-50'
+          },
+          content: {
+            class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
+          }
+        }"
+        @hide="isOwnershipPopoverOpen = false"
+      >
+        <div
+          :class="
+            cn(
+              'flex min-w-32 flex-col gap-2 p-2',
+              'bg-component-node-background',
+              'rounded-lg outline -outline-offset-1 outline-component-node-border'
+            )
+          "
+        >
+          <Button
+            v-for="item of ownershipOptions"
+            :key="item.value"
+            variant="textonly"
+            size="unset"
+            :class="cn('flex h-6 items-center justify-between text-left')"
+            @click="handleOwnershipSelected(item)"
+          >
+            <span>{{ item.name }}</span>
+            <i
+              v-if="ownershipSelected === item.value"
+              class="icon-[lucide--check] size-4"
+            />
+          </Button>
+        </div>
+      </Popover>
+
+      <Button
+        v-if="showBaseModelFilter && baseModelOptions?.length"
+        ref="baseModelTriggerRef"
+        :aria-label="t('assetBrowser.baseModel')"
+        :title="t('assetBrowser.baseModel')"
+        variant="textonly"
+        size="icon"
+        :class="
+          cn(
+            actionButtonStyle,
+            'relative w-8 hover:outline-component-node-widget-background-highlighted active:scale-95'
+          )
+        "
+        @click="toggleBaseModelPopover"
+      >
+        <div
+          v-if="baseModelSelected.size > 0"
+          class="absolute top-[-2px] left-[-2px] size-2 rounded-full bg-component-node-widget-background-highlighted"
+        />
+        <i class="icon-[comfy--ai-model] size-4" />
+      </Button>
+      <Popover
+        ref="baseModelPopoverRef"
+        :dismissable="true"
+        :close-on-escape="true"
+        unstyled
+        :pt="{
+          root: {
+            class: 'absolute z-50'
+          },
+          content: {
+            class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
+          }
+        }"
+        @hide="isBaseModelPopoverOpen = false"
+      >
+        <div
+          :class="
+            cn(
+              'flex min-w-32 flex-col gap-2 p-2',
+              'bg-component-node-background',
+              'rounded-lg outline -outline-offset-1 outline-component-node-border'
+            )
+          "
+        >
+          <Button
+            v-for="item of baseModelOptions"
+            :key="item.value"
+            variant="textonly"
+            size="unset"
+            :class="cn('flex h-6 items-center justify-between text-left')"
+            @click="toggleBaseModelSelection(item)"
+          >
+            <span>{{ item.name }}</span>
+            <i
+              v-if="baseModelSelected.has(item.value)"
+              class="icon-[lucide--check] size-4"
+            />
+          </Button>
+          <span class="h-0 w-full border-b border-border-default" />
+          <Button
+            variant="textonly"
+            size="unset"
+            :class="cn('flex h-6 items-center justify-between text-left')"
+            @click="baseModelSelected = new Set()"
+          >
+            {{ t('g.clearFilters') }}
+          </Button>
+        </div>
+      </Popover>
+
+      <div
+        :class="
+          cn(
+            actionButtonStyle,
+            'flex items-center justify-center gap-1 p-1 hover:outline-component-node-widget-background-highlighted'
+          )
+        "
+      >
+        <Button
+          :aria-label="t('assetBrowser.listView')"
+          :title="t('assetBrowser.listView')"
+          variant="textonly"
+          size="unset"
+          :class="
+            cn(
+              layoutSwitchItemStyle,
+              layoutMode === 'list' && 'bg-neutral-500/50 text-base-foreground'
+            )
+          "
+          @click="layoutMode = 'list'"
+        >
+          <i class="icon-[lucide--list] size-4" />
+        </Button>
+        <Button
+          :aria-label="t('assetBrowser.gridView')"
+          :title="t('assetBrowser.gridView')"
+          variant="textonly"
+          size="unset"
+          :class="
+            cn(
+              layoutSwitchItemStyle,
+              layoutMode === 'grid' && 'bg-neutral-500/50 text-base-foreground'
+            )
+          "
+          @click="layoutMode = 'grid'"
+        >
+          <i class="icon-[lucide--layout-grid] size-4" />
+        </Button>
+      </div>
     </div>
   </div>
 </template>

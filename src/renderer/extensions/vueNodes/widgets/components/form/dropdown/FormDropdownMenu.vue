@@ -19,6 +19,7 @@ import type { FormDropdownItem, LayoutMode, SortOption } from './types'
 interface Props {
   items: FormDropdownItem[]
   isSelected: (item: FormDropdownItem, index: number) => boolean
+  uploadable: boolean
   filterOptions: FilterOption[]
   sortOptions: SortOption[]
   showOwnershipFilter?: boolean
@@ -32,6 +33,7 @@ interface Props {
 const {
   items,
   isSelected,
+  uploadable,
   filterOptions,
   sortOptions,
   showOwnershipFilter,
@@ -44,6 +46,7 @@ const {
 const emit = defineEmits<{
   (e: 'item-click', item: FormDropdownItem, index: number): void
   (e: 'search-enter'): void
+  (e: 'show-picker'): void
 }>()
 
 const filterSelected = defineModel<string>('filterSelected')
@@ -136,7 +139,9 @@ const onWheel = (event: WheelEvent) => {
       :show-base-model-filter
       :base-model-options
       :candidate-label
+      :uploadable
       @search-enter="emit('search-enter')"
+      @show-picker="emit('show-picker')"
     />
     <div
       v-if="items.length === 0"
