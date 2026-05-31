@@ -58,7 +58,7 @@
             variant="secondary"
             size="lg"
             data-testid="error-overlay-see-errors"
-            @click="seeErrors"
+            @click="viewErrorsInGraph"
           >
             {{ appMode ? t('linearMode.error.goto') : seeErrorsLabel }}
           </Button>
@@ -137,9 +137,5 @@ const isVisible = computed(
 
 function dismiss() {
   executionErrorStore.dismissErrorOverlay()
-}
-
-function seeErrors() {
-  viewErrorsInGraph()
 }
 </script>
