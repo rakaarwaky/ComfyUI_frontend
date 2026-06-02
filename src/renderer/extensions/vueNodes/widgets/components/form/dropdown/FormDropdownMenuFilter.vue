@@ -54,7 +54,6 @@ const singleFilterOption = computed(() => filterOptions.length === 1)
     </Button>
     <Button
       v-else-if="uploadable"
-      :aria-label="$t('g.upload')"
       :title="$t('g.upload')"
       variant="textonly"
       size="md"
