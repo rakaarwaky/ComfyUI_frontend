@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ComfyNodeDefImpl } from '@/stores/nodeDefStore'
@@ -7,28 +8,32 @@ const {
   mockAddNodeOnGraph,
   mockConvertEventToCanvasOffset,
   mockSelectItems,
-  mockCanvas
+  mockCanvas,
+  mockCanvasStore
 } = vi.hoisted(() => {
   const mockConvertEventToCanvasOffset = vi.fn()
   const mockSelectItems = vi.fn()
+  // A real element so click-mode placement can hit-test the pointerup target.
+  const canvasElement = document.createElement('canvas')
+  canvasElement.getBoundingClientRect = vi.fn()
+  const mockCanvas = {
+    canvas: canvasElement as HTMLCanvasElement & {
+      getBoundingClientRect: Mock
+    },
+    convertEventToCanvasOffset: mockConvertEventToCanvasOffset,
+    selectItems: mockSelectItems
+  }
   return {
     mockAddNodeOnGraph: vi.fn(),
     mockConvertEventToCanvasOffset,
     mockSelectItems,
-    mockCanvas: {
-      canvas: {
-        getBoundingClientRect: vi.fn()
-      },
-      convertEventToCanvasOffset: mockConvertEventToCanvasOffset,
-      selectItems: mockSelectItems
-    }
+    mockCanvas,
+    mockCanvasStore: { canvas: mockCanvas, isGhostPlacing: false }
   }
 })
 
 vi.mock('@/renderer/core/canvas/canvasStore', () => ({
-  useCanvasStore: vi.fn(() => ({
-    canvas: mockCanvas
-  }))
+  useCanvasStore: vi.fn(() => mockCanvasStore)
 }))
 
 vi.mock('@/services/litegraphService', () => ({
@@ -45,9 +50,17 @@ describe('useNodeDragToCanvas', () => {
     display_name: 'Test Node'
   } as ComfyNodeDefImpl
 
+  // Stands in for a sidebar/properties panel that overlays the full-bleed canvas.
+  let panelElement: HTMLElement
+
   beforeEach(async () => {
     vi.resetModules()
     vi.resetAllMocks()
+
+    mockCanvasStore.isGhostPlacing = false
+    document.body.appendChild(mockCanvas.canvas)
+    panelElement = document.createElement('div')
+    document.body.appendChild(panelElement)
 
     const module = await import('./useNodeDragToCanvas')
     useNodeDragToCanvas = module.useNodeDragToCanvas
@@ -56,6 +69,8 @@ describe('useNodeDragToCanvas', () => {
   afterEach(() => {
     const { cleanupGlobalListeners } = useNodeDragToCanvas()
     cleanupGlobalListeners()
+    mockCanvas.canvas.remove()
+    panelElement.remove()
     vi.restoreAllMocks()
   })
 
@@ -86,6 +101,27 @@ describe('useNodeDragToCanvas', () => {
       startDrag(mockNodeDef, 'native')
 
       expect(dragMode.value).toBe('native')
+    })
+
+    // Vue nodes render inert while isGhostPlacing is set, so a release over
+    // an existing node hit-tests the canvas instead of being cancelled.
+    it('should mark ghost placement active for the duration of the drag', () => {
+      const { startDrag, cancelDrag } = useNodeDragToCanvas()
+
+      startDrag(mockNodeDef)
+      expect(mockCanvasStore.isGhostPlacing).toBe(true)
+
+      cancelDrag()
+      expect(mockCanvasStore.isGhostPlacing).toBe(false)
+    })
+
+    it('should not clear ghost placement when cancelling without a drag', () => {
+      const { cancelDrag } = useNodeDragToCanvas()
+
+      mockCanvasStore.isGhostPlacing = true
+      cancelDrag()
+
+      expect(mockCanvasStore.isGhostPlacing).toBe(true)
     })
   })
 
@@ -191,14 +227,18 @@ describe('useNodeDragToCanvas', () => {
         clientY: 250,
         bubbles: true
       })
-      document.dispatchEvent(pointerEvent)
+      mockCanvas.canvas.dispatchEvent(pointerEvent)
 
       expect(mockAddNodeOnGraph).toHaveBeenCalledWith(mockNodeDef, {
         pos: [150, 150]
       })
     })
 
-    it('should not add node when pointer is outside canvas', () => {
+    // FE-688: panels overlay the full-bleed canvas, so a release whose
+    // coordinates fall inside the canvas rect can still land on a panel.
+    // Hit-testing the target must cancel placement instead of stacking a
+    // node hidden behind the panel.
+    it('should not add node when released over a panel within canvas bounds', () => {
       mockCanvas.canvas.getBoundingClientRect.mockReturnValue({
         left: 0,
         right: 500,
@@ -213,11 +253,11 @@ describe('useNodeDragToCanvas', () => {
       startDrag(mockNodeDef)
 
       const pointerEvent = new PointerEvent('pointerup', {
-        clientX: 600,
+        clientX: 250,
         clientY: 250,
         bubbles: true
       })
-      document.dispatchEvent(pointerEvent)
+      panelElement.dispatchEvent(pointerEvent)
 
       expect(mockAddNodeOnGraph).not.toHaveBeenCalled()
       expect(isDragging.value).toBe(false)
@@ -266,7 +306,7 @@ describe('useNodeDragToCanvas', () => {
       setupGlobalListeners()
       startDrag(mockNodeDef)
 
-      document.dispatchEvent(
+      mockCanvas.canvas.dispatchEvent(
         new PointerEvent('pointerup', {
           clientX: 250,
           clientY: 250,
@@ -291,7 +331,7 @@ describe('useNodeDragToCanvas', () => {
       setupGlobalListeners()
       startDrag(mockNodeDef)
 
-      document.dispatchEvent(
+      mockCanvas.canvas.dispatchEvent(
         new PointerEvent('pointerup', {
           clientX: 250,
           clientY: 250,
@@ -404,7 +444,11 @@ describe('useNodeDragToCanvas', () => {
   })
 
   describe('blockCommitPointerDown', () => {
-    function dispatchPointerDown(x: number, y: number) {
+    function dispatchPointerDown(
+      x: number,
+      y: number,
+      target: HTMLElement = mockCanvas.canvas
+    ) {
       const event = new PointerEvent('pointerdown', {
         clientX: x,
         clientY: y,
@@ -412,7 +456,7 @@ describe('useNodeDragToCanvas', () => {
         cancelable: true
       })
       const stopSpy = vi.spyOn(event, 'stopImmediatePropagation')
-      document.dispatchEvent(event)
+      target.dispatchEvent(event)
       return stopSpy
     }
 
@@ -448,12 +492,12 @@ describe('useNodeDragToCanvas', () => {
       expect(dispatchPointerDown(250, 250)).not.toHaveBeenCalled()
     })
 
-    it('should not stop propagation when pointer is outside canvas', () => {
+    it('should not stop propagation when pointer is over a panel', () => {
       const { startDrag, setupGlobalListeners } = useNodeDragToCanvas()
       setupGlobalListeners()
       startDrag(mockNodeDef)
 
-      expect(dispatchPointerDown(600, 250)).not.toHaveBeenCalled()
+      expect(dispatchPointerDown(250, 250, panelElement)).not.toHaveBeenCalled()
     })
   })
 
