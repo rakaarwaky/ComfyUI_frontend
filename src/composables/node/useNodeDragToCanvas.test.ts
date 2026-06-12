@@ -189,6 +189,26 @@ describe('useNodeDragToCanvas', () => {
 
       expect(addEventListenerSpy.mock.calls.length).toBe(callCount)
     })
+
+    // The component handling dragend unmounts with the listeners, so an
+    // in-flight native drag can never complete — cancel it on cleanup or
+    // the ghost-placement flag leaks and leaves all Vue nodes inert.
+    it('should cancel an active native drag on cleanup', () => {
+      const {
+        startDrag,
+        setupGlobalListeners,
+        cleanupGlobalListeners,
+        isDragging
+      } = useNodeDragToCanvas()
+
+      setupGlobalListeners()
+      startDrag(mockNodeDef, 'native')
+
+      cleanupGlobalListeners()
+
+      expect(isDragging.value).toBe(false)
+      expect(mockCanvasStore.isGhostPlacing).toBe(false)
+    })
   })
 
   describe('cursorPosition', () => {
