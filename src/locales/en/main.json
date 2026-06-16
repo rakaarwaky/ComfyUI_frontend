@@ -2119,6 +2119,22 @@
     "monotone_cubic": "Smooth",
     "linear": "Linear"
   },
+  "boundingBoxes": {
+    "clearAll": "Clear all",
+    "clickRegionToEdit": "Click a region to edit it.",
+    "typeObj": "obj",
+    "typeText": "text",
+    "textLabel": "Text",
+    "descLabel": "Description",
+    "textPlaceholder": "text to render (verbatim)",
+    "descPlaceholder": "description of this region",
+    "colors": "Colors",
+    "canvasHint": "Drag to draw · click to select · alt-click overlap · dbl-click edit · Del remove"
+  },
+  "palette": {
+    "addColor": "Add a color",
+    "swatchTitle": "Click edit · drag reorder · right-click remove"
+  },
   "toastMessages": {
     "nothingToQueue": "Nothing to queue",
     "pleaseSelectOutputNodes": "Please select output nodes",
