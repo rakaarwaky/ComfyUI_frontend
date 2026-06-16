@@ -34,7 +34,7 @@
             <span
               :class="
                 cn(
-                  'min-w-[4ch] flex-1 truncate pr-3 pl-1 text-left',
+                  '-mr-1 min-w-[4ch] flex-1 truncate pl-1 text-left',
                   $slots.default && 'mr-5'
                 )
               "
@@ -42,12 +42,12 @@
               {{ selectedLabel || placeholder || '\u00a0' }}
             </span>
             <span
-              class="flex h-full w-8 shrink-0 items-center justify-center rounded-r-lg"
+              class="flex size-4 h-full shrink-0 items-center justify-center rounded-r-lg"
             >
               <i
                 :class="
                   cn(
-                    'icon-[lucide--chevron-down] size-4 translate-x-1.5',
+                    'icon-[lucide--chevron-down]',
                     disabled
                       ? 'bg-component-node-foreground-secondary'
                       : 'bg-muted-foreground'
