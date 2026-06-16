@@ -44,7 +44,12 @@ import {
   getLocatorIdFromNodeData
 } from '@/utils/graphTraversalUtil'
 
-const TOOLTIP_VALUE_TYPES: Readonly<string[]> = ['text', 'combo', 'number']
+const TOOLTIP_VALUE_TYPES: Readonly<string[]> = [
+  'asset',
+  'combo',
+  'number',
+  'text'
+]
 
 interface ProcessedWidget {
   advanced: boolean
