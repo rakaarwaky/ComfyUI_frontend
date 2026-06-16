@@ -34,7 +34,7 @@
             <span
               :class="
                 cn(
-                  '-mr-1 min-w-[4ch] flex-1 truncate pl-1 text-left',
+                  'min-w-[4ch] flex-1 truncate pl-1 text-left',
                   $slots.default && 'mr-5'
                 )
               "
@@ -42,7 +42,7 @@
               {{ selectedLabel || placeholder || '\u00a0' }}
             </span>
             <span
-              class="flex size-4 h-full shrink-0 items-center justify-center rounded-r-lg"
+              class="flex h-full w-5 shrink-0 items-center justify-center rounded-r-lg"
             >
               <i
                 :class="
