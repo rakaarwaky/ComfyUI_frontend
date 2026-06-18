@@ -154,13 +154,72 @@ export function getAssetModelType(asset: AssetItem): string | null {
   return typeTag ?? null
 }
 
-const MODEL_TYPE_TAG_PREFIX = 'model_type:'
+export const MODEL_TYPE_TAG_PREFIX = 'model_type:'
+
+/**
+ * Builds the namespaced subtype tag the backend stores in `model_type:` mode.
+ * The argument is a discovery folder_name (e.g. `checkpoints`,
+ * `ultralytics_bbox`); the backend keeps the bare directory-path twin in sync.
+ */
+export function toModelTypeTag(folderName: string): string {
+  return `${MODEL_TYPE_TAG_PREFIX}${folderName}`
+}
 
 function getModelTypeTagValues(asset: AssetItem): string[] {
   return asset.tags
     .filter((tag) => tag.startsWith(MODEL_TYPE_TAG_PREFIX))
     .map((tag) => tag.slice(MODEL_TYPE_TAG_PREFIX.length))
     .filter((tag) => tag.length > 0)
+}
+
+/**
+ * Resolves the folder_name shown as the asset's current model type in the edit
+ * dropdown. In `modelTypeMode` the stripped `model_type:` value is authoritative
+ * (covered assets); an uncovered asset with no `model_type:` tag falls back to
+ * its bare subtype tag, mirroring the read-side grouping. Outside the mode this
+ * is the legacy first-non-`models` tag.
+ */
+export function getEditableModelType(
+  asset: AssetItem,
+  modelTypeMode = false
+): string | null {
+  if (modelTypeMode) {
+    const [modelType] = getModelTypeTagValues(asset)
+    if (modelType) return modelType
+  }
+  return getAssetModelType(asset)
+}
+
+/**
+ * Computes the tag set for re-typing a model asset to `newFolderName`. In
+ * `modelTypeMode` only the `model_type:` form is written — the backend keeps the
+ * bare directory-path twin in sync, so existing `model_type:` tags are dropped
+ * (covered assets) or the bare current type is dropped (uncovered assets) and
+ * the new `model_type:<folder_name>` is added. Outside the mode it swaps the
+ * legacy bare subtype tag, preserving the pre-namespace behavior.
+ */
+export function buildModelTypeTagUpdate(
+  asset: AssetItem,
+  newFolderName: string,
+  modelTypeMode = false
+): string[] {
+  if (!modelTypeMode) {
+    const currentType = getAssetModelType(asset)
+    return asset.tags.filter((tag) => tag !== currentType).concat(newFolderName)
+  }
+
+  const modelTypeTags = asset.tags.filter((tag) =>
+    tag.startsWith(MODEL_TYPE_TAG_PREFIX)
+  )
+  const currentBareType = getAssetModelType(asset)
+  const tagsToRemove =
+    modelTypeTags.length > 0
+      ? new Set(modelTypeTags)
+      : new Set(currentBareType ? [currentBareType] : [])
+
+  return asset.tags
+    .filter((tag) => !tagsToRemove.has(tag))
+    .concat(toModelTypeTag(newFolderName))
 }
 
 function getBareTagCategories(asset: AssetItem): string[] {
