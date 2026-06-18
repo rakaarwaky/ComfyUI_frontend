@@ -6,7 +6,10 @@ import {
   MISSING_TAG,
   MODELS_TAG
 } from '@/platform/assets/services/assetService'
-import { getAssetFilename } from '@/platform/assets/utils/assetMetadataUtils'
+import {
+  getAssetFilename,
+  getAssetNodeCategory
+} from '@/platform/assets/utils/assetMetadataUtils'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
 import { app } from '@/scripts/app'
 import { useLitegraphService } from '@/services/litegraphService'
@@ -99,9 +102,7 @@ export function createModelNodeFromAsset(
     }
   }
 
-  const category = validAsset.tags.find(
-    (tag) => tag !== MODELS_TAG && tag !== MISSING_TAG
-  )
+  const category = getAssetNodeCategory(validAsset)
   if (!category) {
     console.error(
       `Asset ${validAsset.id} has no valid category tag. Available tags: ${validAsset.tags.join(', ')} (expected tag other than '${MODELS_TAG}' or '${MISSING_TAG}')`

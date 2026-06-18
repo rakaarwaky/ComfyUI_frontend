@@ -184,6 +184,15 @@ describe('createModelNodeFromAsset', () => {
         )
       }
     })
+    it('should strip the model_type: prefix when resolving the provider', async () => {
+      const asset = createMockAsset({ tags: ['models', 'model_type:vae'] })
+      await setupMocks()
+      const result = createModelNodeFromAsset(asset)
+      expect(result.success).toBe(true)
+      expect(
+        vi.mocked(useModelToNodeStore)().getNodeProvider
+      ).toHaveBeenCalledWith('vae')
+    })
     it('should place node at canvas center by default', async () => {
       const asset = createMockAsset()
       await setupMocks({
