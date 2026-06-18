@@ -22,6 +22,16 @@ vi.mock('@/scripts/api', () => ({
     apiURL: vi.fn((path: string) => `http://localhost:8188${path}`)
   }
 }))
+const mockSupportsModelTypeTags = vi.hoisted(() => ({ value: false }))
+vi.mock('@/composables/useFeatureFlags', () => ({
+  useFeatureFlags: () => ({
+    flags: {
+      get supportsModelTypeTags() {
+        return mockSupportsModelTypeTags.value
+      }
+    }
+  })
+}))
 vi.mock('@/stores/modelToNodeStore', async (importOriginal) => {
   const actual = await importOriginal<typeof ModelToNodeStoreModule>()
   return {
@@ -166,6 +176,7 @@ describe('createModelNodeFromAsset', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mockSupportsModelTypeTags.value = false
   })
   describe('when creating nodes from valid assets', () => {
     it('should create the appropriate loader node for the asset category', async () => {
@@ -184,7 +195,8 @@ describe('createModelNodeFromAsset', () => {
         )
       }
     })
-    it('should strip the model_type: prefix when resolving the provider', async () => {
+    it('should strip the model_type: prefix when resolving the provider in model_type mode', async () => {
+      mockSupportsModelTypeTags.value = true
       const asset = createMockAsset({ tags: ['models', 'model_type:vae'] })
       await setupMocks()
       const result = createModelNodeFromAsset(asset)

@@ -10,6 +10,7 @@ import {
   getAssetFilename,
   getAssetNodeCategory
 } from '@/platform/assets/utils/assetMetadataUtils'
+import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
 import { app } from '@/scripts/app'
 import { useLitegraphService } from '@/services/litegraphService'
@@ -102,7 +103,8 @@ export function createModelNodeFromAsset(
     }
   }
 
-  const category = getAssetNodeCategory(validAsset)
+  const { flags } = useFeatureFlags()
+  const category = getAssetNodeCategory(validAsset, flags.supportsModelTypeTags)
   if (!category) {
     console.error(
       `Asset ${validAsset.id} has no valid category tag. Available tags: ${validAsset.tags.join(', ')} (expected tag other than '${MODELS_TAG}' or '${MISSING_TAG}')`
