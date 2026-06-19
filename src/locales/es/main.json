@@ -3979,6 +3979,7 @@
     "fileTooLarge": "Archivo demasiado grande ({size} MB). El tamaño máximo soportado es {maxSize} MB",
     "fileUploadFailed": "Error al subir el archivo",
     "interrupted": "La ejecución ha sido interrumpida",
+    "invalidTemplateData": "No se pudo cargar la plantilla de nodo: datos no válidos",
     "legacyMaskEditorDeprecated": "El editor de máscaras heredado está obsoleto y se eliminará pronto.",
     "migrateToLitegraphReroute": "Los nodos de reroute se eliminarán en futuras versiones. Haz clic para migrar a reroute nativo de litegraph.",
     "missingModelVerificationFailed": "No se pudo verificar los modelos faltantes. Algunos modelos pueden no aparecer en la pestaña de Errores.",

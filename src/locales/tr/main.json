@@ -3979,6 +3979,7 @@
     "fileTooLarge": "Dosya çok büyük ({size} MB). Desteklenen maksimum boyut {maxSize} MB",
     "fileUploadFailed": "Dosya yükleme başarısız oldu",
     "interrupted": "Yürütme kesintiye uğradı",
+    "invalidTemplateData": "Düğüm şablonu yüklenemedi: geçersiz veri",
     "legacyMaskEditorDeprecated": "Klasik maske düzenleyici kullanımdan kaldırıldı ve yakında kaldırılacak.",
     "migrateToLitegraphReroute": "Yeniden yönlendirme düğümleri gelecekteki sürümlerde kaldırılacaktır. Litegraph yerel yeniden yönlendirmeye geçmek için tıklayın.",
     "missingModelVerificationFailed": "Eksik modeller doğrulanamadı. Bazı modeller Hatalar sekmesinde gösterilmeyebilir.",

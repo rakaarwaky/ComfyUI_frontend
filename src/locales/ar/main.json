@@ -3979,6 +3979,7 @@
     "fileTooLarge": "الملف كبير جدًا ({size} ميجابايت). الحد الأقصى المدعوم هو {maxSize} ميجابايت",
     "fileUploadFailed": "فشل رفع الملف",
     "interrupted": "تم إيقاف التنفيذ",
+    "invalidTemplateData": "فشل في تحميل قالب العقدة: بيانات غير صالحة",
     "legacyMaskEditorDeprecated": "محرر القناع القديم لم يعد مدعوماً وسيتم إزالته قريباً.",
     "migrateToLitegraphReroute": "سيتم إزالة عقد إعادة التوجيه في الإصدارات المستقبلية. انقر للترحيل إلى إعادة التوجيه الأصلية في Litegraph.",
     "missingModelVerificationFailed": "فشل التحقق من النماذج المفقودة. قد لا تظهر بعض النماذج في علامة تبويب الأخطاء.",
