@@ -53,7 +53,7 @@
       <!-- Circular drag handle -->
       <div
         v-if="hasCompareImages"
-        class="pointer-events-none absolute top-0 z-10 h-full"
+        class="pointer-events-none absolute top-0 z-10 h-full w-6"
         :style="{ left: `${sliderPosition}%` }"
         role="presentation"
       >
