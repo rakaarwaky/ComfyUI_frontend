@@ -53,13 +53,18 @@
       <!-- Circular drag handle -->
       <div
         v-if="hasCompareImages"
-        class="pointer-events-none absolute top-0 z-10 h-full w-0.25 bg-white/30 backdrop-blur-sm"
+        class="pointer-events-none absolute top-0 z-10 h-full"
         :style="{ left: `${sliderPosition}%` }"
         role="presentation"
       >
         <div
-          v-if="hasCompareImages"
+          class="absolute top-0 h-[calc(50%-12px)] w-0.25 bg-white/30 backdrop-blur-sm"
+        />
+        <div
           class="absolute top-1/2 size-6 -translate-1/2 rounded-full border-2 bg-white/30 shadow-lg backdrop-blur-sm"
+        />
+        <div
+          class="absolute bottom-0 h-[calc(50%-12px)] w-0.25 bg-white/30 backdrop-blur-sm"
         />
       </div>
     </div>
