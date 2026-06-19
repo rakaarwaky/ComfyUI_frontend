@@ -3,7 +3,7 @@ import {
   comfyPageFixture as test
 } from '@e2e/fixtures/ComfyPage'
 
-test.describe('@vue-nodes tooltips', async () => {
+test.describe('tooltips', { tag: '@vue-nodes' }, async () => {
   test.beforeEach(async ({ comfyPage }) => {
     await comfyPage.settings.setSetting('Comfy.EnableTooltips', true)
     await comfyPage.settings.setSetting('LiteGraph.Node.TooltipDelay', 0)
